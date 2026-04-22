@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package fixbug; // 类似namespace
+
+message LoginRequest {
+    bytes name = 1;
+    bytes pwd = 2;
+}
+
+message ResultCode {
+    int32 err_code = 1;
+    bytes err_msg = 2;
+}
+
+message LoginResponse {
+    ResultCode result = 1;
+    bool success = 2;
+}
+
+message GetFriendListRequest {
+    uint32 user_id = 1;
+}
+
+message User {
+    bytes name = 1;
+    uint32 age = 2;
+
+    enum Sex {
+        MAN = 0;
+        WOMAN = 1;
+    }
+
+    Sex sex = 3;
+}
+
+message GetFriendListResponse {
+    ResultCode result = 1;
+    repeated User friend_list = 2;
+}
+
+// UserServiceRpc 提供用户相关的 RPC 服务
+// 包括用户登录、注册、信息查询等功能
+service UserServiceRpc {
+    // 用户登录验证
+    // 接收登录请求，验证用户名和密码，返回登录结果
+    rpc Login(LoginRequest) returns (LoginResponse);
+
+    // 获取好友列表
+    // 响应
+    rpc GetFriendLists(GetFriendListRequest) returns (GetFriendListResponse);
+}
