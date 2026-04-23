@@ -29,6 +29,7 @@
 #include "google/protobuf/message_lite.h"
 #include "google/protobuf/repeated_field.h"  // IWYU pragma: export
 #include "google/protobuf/extension_set.h"  // IWYU pragma: export
+#include "google/protobuf/service.h"
 #include "google/protobuf/unknown_field_set.h"
 // @@protoc_insertion_point(includes)
 
@@ -725,6 +726,69 @@ extern const ::google::protobuf::internal::ClassDataFull LoginResponse_class_dat
 
 // ===================================================================
 
+
+// -------------------------------------------------------------------
+
+class UserServiceRpc_Stub;
+class UserServiceRpc : public ::google::protobuf::Service {
+ protected:
+  UserServiceRpc() = default;
+
+ public:
+  using Stub = UserServiceRpc_Stub;
+
+  UserServiceRpc(const UserServiceRpc&) = delete;
+  UserServiceRpc& operator=(const UserServiceRpc&) = delete;
+  virtual ~UserServiceRpc() = default;
+
+  static const ::google::protobuf::ServiceDescriptor* PROTOBUF_NONNULL descriptor();
+
+  virtual void Login(::google::protobuf::RpcController* PROTOBUF_NULLABLE controller,
+                        const ::fixbug::LoginRequest* PROTOBUF_NONNULL request,
+                        ::fixbug::LoginResponse* PROTOBUF_NONNULL response,
+                        ::google::protobuf::Closure* PROTOBUF_NULLABLE done);
+
+  // implements Service ----------------------------------------------
+  const ::google::protobuf::ServiceDescriptor* PROTOBUF_NONNULL GetDescriptor() override;
+
+  void CallMethod(
+      const ::google::protobuf::MethodDescriptor* PROTOBUF_NONNULL method,
+      ::google::protobuf::RpcController* PROTOBUF_NULLABLE controller,
+      const ::google::protobuf::Message* PROTOBUF_NONNULL request,
+      ::google::protobuf::Message* PROTOBUF_NONNULL response,
+      ::google::protobuf::Closure* PROTOBUF_NULLABLE done) override;
+
+  const ::google::protobuf::Message& GetRequestPrototype(
+      const ::google::protobuf::MethodDescriptor* PROTOBUF_NONNULL method) const override;
+
+  const ::google::protobuf::Message& GetResponsePrototype(
+      const ::google::protobuf::MethodDescriptor* PROTOBUF_NONNULL method) const override;
+};
+
+class UserServiceRpc_Stub final : public UserServiceRpc {
+ public:
+  UserServiceRpc_Stub(::google::protobuf::RpcChannel* PROTOBUF_NULLABLE channel);
+  UserServiceRpc_Stub(::google::protobuf::RpcChannel* PROTOBUF_NULLABLE channel,
+                   ::google::protobuf::Service::ChannelOwnership ownership);
+
+  UserServiceRpc_Stub(const UserServiceRpc_Stub&) = delete;
+  UserServiceRpc_Stub& operator=(const UserServiceRpc_Stub&) = delete;
+
+  ~UserServiceRpc_Stub() override;
+
+  inline ::google::protobuf::RpcChannel* PROTOBUF_NULLABLE channel() { return channel_; }
+
+  // implements UserServiceRpc ------------------------------------------
+  void Login(::google::protobuf::RpcController* PROTOBUF_NULLABLE controller,
+                        const ::fixbug::LoginRequest* PROTOBUF_NONNULL request,
+                        ::fixbug::LoginResponse* PROTOBUF_NONNULL response,
+                        ::google::protobuf::Closure* PROTOBUF_NULLABLE done) override;
+
+ private:
+  ::google::protobuf::RpcChannel* PROTOBUF_NULLABLE channel_;
+  bool owns_channel_;
+};
+// ===================================================================
 
 
 

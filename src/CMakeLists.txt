@@ -10,10 +10,9 @@ target_link_libraries(mprpc PUBLIC
     gpr
 )
 target_include_directories(mprpc PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
 )
-
 
 install(DIRECTORY include/
     DESTINATION include/${PROJECT_NAME}

@@ -1,4 +1,4 @@
-# bin
-file(GLOB_RECURSE SRC_LIST "*.cpp" "*.cc")
-add_executable(mprpc_bin main.cpp ${SRC_LIST})
-target_link_libraries(mprpc_bin PRIVATE mprpc)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+link_libraries(mprpc)
+add_subdirectory(callee)
+add_subdirectory(caller)

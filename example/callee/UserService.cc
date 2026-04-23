@@ -1,10 +1,12 @@
-#include "../user.grpc.pb.h"
 #include "../user.pb.h"
 #include <absl/base/call_once.h>
+#include <google/protobuf/service.h>
 #include <grpcpp/support/status.h>
 
-class UserService final : public ::fixbug::UserServiceRpc::Service {
+class UserService final : public fixbug::UserServiceRpc {
 public:
+    UserService() { }
+
     bool Login(std::string name, std::string pwd) {
         std::cout << "name:" << name << "\t" << "passwd:" << pwd << "\n";
         return true;
@@ -19,9 +21,8 @@ public:
      * @param response
      * @return ::grpc::Status
      */
-    ::grpc::Status Login(::grpc::ServerContext *context,
-        ::fixbug::LoginRequest const *request,
-        ::fixbug::LoginResponse *response) override {
+    void Login(::google::protobuf::RpcController *controller, ::fixbug::LoginRequest const *request,
+        ::fixbug::LoginResponse *response, ::google::protobuf::Closure *done) override {
         std::string name = request->name();
         std::string passwd = request->pwd();
         bool ok = this->Login(name, passwd);
@@ -35,6 +36,6 @@ public:
             response->mutable_result()->set_errmsg("Unknown params");
         }
 
-        return ::grpc::Status::OK;
+        done->Run();
     }
 };

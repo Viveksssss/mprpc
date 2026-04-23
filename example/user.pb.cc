@@ -116,8 +116,8 @@ PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT
 }  // namespace fixbug
 static constexpr const ::_pb::EnumDescriptor* PROTOBUF_NONNULL* PROTOBUF_NULLABLE
     file_level_enum_descriptors_user_2eproto = nullptr;
-static constexpr const ::_pb::ServiceDescriptor* PROTOBUF_NONNULL* PROTOBUF_NULLABLE
-    file_level_service_descriptors_user_2eproto = nullptr;
+static const ::_pb::ServiceDescriptor* PROTOBUF_NONNULL
+    file_level_service_descriptors_user_2eproto[1];
 const ::uint32_t
     TableStruct_user_2eproto::offsets[] ABSL_ATTRIBUTE_SECTION_VARIABLE(
         protodesc_cold) = {
@@ -163,13 +163,13 @@ const char descriptor_table_protodef_user_2eproto[] ABSL_ATTRIBUTE_SECTION_VARIA
     "esponse\022\"\n\006result\030\001 \001(\0132\022.fixbug.ResultC"
     "ode\022\017\n\007success\030\002 \001(\0102F\n\016UserServiceRpc\0224"
     "\n\005Login\022\024.fixbug.LoginRequest\032\025.fixbug.L"
-    "oginResponseb\006proto3"
+    "oginResponseB\003\200\001\001b\006proto3"
 };
 static ::absl::once_flag descriptor_table_user_2eproto_once;
 PROTOBUF_CONSTINIT const ::_pbi::DescriptorTable descriptor_table_user_2eproto = {
     false,
     false,
-    260,
+    265,
     descriptor_table_protodef_user_2eproto,
     "user.proto",
     &descriptor_table_user_2eproto_once,
@@ -1107,6 +1107,91 @@ void LoginResponse::InternalSwap(LoginResponse* PROTOBUF_RESTRICT PROTOBUF_NONNU
 
 ::google::protobuf::Metadata LoginResponse::GetMetadata() const {
   return ::google::protobuf::Message::GetMetadataImpl(GetClassData()->full());
+}
+// ===================================================================
+
+const ::google::protobuf::ServiceDescriptor* PROTOBUF_NONNULL UserServiceRpc::descriptor() {
+  ::google::protobuf::internal::AssignDescriptors(&descriptor_table_user_2eproto);
+  return file_level_service_descriptors_user_2eproto[0];
+}
+
+const ::google::protobuf::ServiceDescriptor* PROTOBUF_NONNULL UserServiceRpc::GetDescriptor() {
+  return descriptor();
+}
+
+void UserServiceRpc::Login(::google::protobuf::RpcController* PROTOBUF_NULLABLE controller,
+                         const ::fixbug::LoginRequest* PROTOBUF_NONNULL,
+                         ::fixbug::LoginResponse* PROTOBUF_NONNULL,
+                         ::google::protobuf::Closure* PROTOBUF_NULLABLE done) {
+  controller->SetFailed("Method Login() not implemented.");
+  done->Run();
+}
+
+void UserServiceRpc::CallMethod(
+    const ::google::protobuf::MethodDescriptor* PROTOBUF_NONNULL method,
+    ::google::protobuf::RpcController* PROTOBUF_NULLABLE controller,
+    const ::google::protobuf::Message* PROTOBUF_NONNULL request,
+    ::google::protobuf::Message* PROTOBUF_NONNULL response, ::google::protobuf::Closure* PROTOBUF_NULLABLE done) {
+  ABSL_DCHECK_EQ(method->service(), file_level_service_descriptors_user_2eproto[0]);
+  switch (method->index()) {
+    case 0:
+      this->Login(controller, ::google::protobuf::DownCastMessage<::fixbug::LoginRequest>(request),
+                   ::google::protobuf::DownCastMessage<::fixbug::LoginResponse>(response), done);
+      break;
+
+    default:
+      ABSL_LOG(FATAL) << "Bad method index; this should never happen.";
+      break;
+  }
+}
+
+const ::google::protobuf::Message& UserServiceRpc::GetRequestPrototype(
+    const ::google::protobuf::MethodDescriptor* PROTOBUF_NONNULL method) const {
+  ABSL_DCHECK_EQ(method->service(), descriptor());
+  switch (method->index()) {
+    case 0:
+      return ::fixbug::LoginRequest::default_instance();
+
+    default:
+      ABSL_LOG(FATAL) << "Bad method index; this should never happen.";
+      return *::google::protobuf::MessageFactory::generated_factory()->GetPrototype(
+          method->input_type());
+  }
+}
+
+const ::google::protobuf::Message& UserServiceRpc::GetResponsePrototype(
+    const ::google::protobuf::MethodDescriptor* PROTOBUF_NONNULL method) const {
+  ABSL_DCHECK_EQ(method->service(), descriptor());
+  switch (method->index()) {
+    case 0:
+      return ::fixbug::LoginResponse::default_instance();
+
+    default:
+      ABSL_LOG(FATAL) << "Bad method index; this should never happen.";
+      return *::google::protobuf::MessageFactory::generated_factory()->GetPrototype(
+          method->output_type());
+  }
+}
+
+UserServiceRpc_Stub::UserServiceRpc_Stub(::google::protobuf::RpcChannel* PROTOBUF_NULLABLE channel)
+    : channel_(channel), owns_channel_(false) {}
+
+UserServiceRpc_Stub::UserServiceRpc_Stub(
+    ::google::protobuf::RpcChannel* PROTOBUF_NULLABLE channel,
+    ::google::protobuf::Service::ChannelOwnership ownership)
+    : channel_(channel),
+      owns_channel_(ownership == ::google::protobuf::Service::STUB_OWNS_CHANNEL) {}
+
+UserServiceRpc_Stub::~UserServiceRpc_Stub() {
+  if (owns_channel_) delete channel_;
+}
+
+void UserServiceRpc_Stub::Login(
+    ::google::protobuf::RpcController* PROTOBUF_NULLABLE controller,
+    const ::fixbug::LoginRequest* PROTOBUF_NONNULL request, ::fixbug::LoginResponse* PROTOBUF_NONNULL response,
+    ::google::protobuf::Closure* PROTOBUF_NULLABLE done) {
+  channel_->CallMethod(descriptor()->method(0), controller,
+                       request, response, done);
 }
 // @@protoc_insertion_point(namespace_scope)
 }  // namespace fixbug
