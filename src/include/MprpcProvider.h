@@ -18,7 +18,7 @@
 
 class Service;
 
-class RpcProvider : noncopyable {
+class MprpcProvider : noncopyable {
 public:
     void NotifyService(::google::protobuf::Service *service);
     void Run();

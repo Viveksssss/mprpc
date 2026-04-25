@@ -1,0 +1,48 @@
+{
+    // 使用 IntelliSense 了解相关属性。 
+    // 悬停以查看现有属性的描述。
+    // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+              "name": "Debug callee (服务端)",
+              "type": "cppdbg",
+              "request": "launch",
+              "program": "${workspaceFolder}/out/callee", // 指向你的可执行文件
+              "args": ["-i", "${workspaceFolder}/out/config.conf"],           // 你的命令行参数
+              "cwd": "${workspaceFolder}",             // 确保程序能找到 config.conf
+              "environment": [],
+              "externalConsole": false,
+              "MIMode": "gdb",
+              "miDebuggerPath": "/usr/bin/gdb",        // 确保路径正确 (which gdb)
+              "setupCommands": [
+                {
+                  "description": "为 gdb 启用整齐打印",
+                  "text": "-enable-pretty-printing",
+                  "ignoreFailures": true
+                }
+              ]
+            },
+            {
+              "name": "Debug caller (客户端)",
+              "type": "cppdbg",
+              "request": "launch",
+              "program": "${workspaceFolder}/out/caller",
+              "args": ["-i", "${workspaceFolder}/out/config.conf"],
+              "stopAtEntry": false,
+              "cwd": "${workspaceFolder}",
+              "environment": [],
+              "externalConsole": false,
+              "MIMode": "gdb",
+              "miDebuggerPath": "/usr/bin/gdb",
+              "setupCommands": [
+                {
+                  "description": "为 gdb 启用整齐打印",
+                  "text": "-enable-pretty-printing",
+                  "ignoreFailures": true
+                }
+              ]
+            }
+
+    ]
+}

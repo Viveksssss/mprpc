@@ -1,4 +1,4 @@
-#include "include/RpcProvider.h"
+#include "include/MprpcProvider.h"
 #include "include/Config.h"
 #include "include/rpcheader.pb.h"
 #include <Callbacks.h>
@@ -18,7 +18,7 @@
 #undef LOG_ENABLED
 #define LOG_ENABLED true
 
-void RpcProvider::NotifyService(::google::protobuf::Service *service) {
+void MprpcProvider::NotifyService(::google::protobuf::Service *service) {
     /* 一个服务信息结构体 */
     ServiceInfo service_info;
     ::google::protobuf::ServiceDescriptor const *descriptor = service->GetDescriptor();
@@ -31,29 +31,35 @@ void RpcProvider::NotifyService(::google::protobuf::Service *service) {
         /* 获取这个函数的名称 */
         std::string method_name = method_descriptor->name().data();
         /* 将<方法名称，函数descriptor>插入到映射表中 */
-        service_info._methods.insert({std::move(method_name), method_descriptor});
+        service_info._methods.insert({method_name, method_descriptor});
     }
+    service_info._service = service;
     /* 插入映射表 */
     _services.insert({std::move(service_name), service_info});
 }
 
-void RpcProvider::Run() {
+void MprpcProvider::Run() {
+    std::cout << ("===== to be Run =====\n");
     std::string serverip = Config::GetInstance().Get("rpcserverip");
     std::string serverport = Config::GetInstance().Get("rpcserverport");
     InetAddress addr(std::stoi(serverport), serverip);
     _loop = new EventLoop;
     TcpServer server(_loop, addr, "RpcServer");
 
+    // log_info("{}:{}", serverip, serverport);
+    std::cout << serverip << ":" << serverport << std::endl;
+
     server.setConnectionCallback(
-        std::bind(&::RpcProvider::OnConnection, this, std::placeholders::_1));
-    server.setMessageCallback(std::bind(&::RpcProvider::OnMessage, this, std::placeholders::_1,
+        std::bind(&::MprpcProvider::OnConnection, this, std::placeholders::_1));
+    server.setMessageCallback(std::bind(&::MprpcProvider::OnMessage, this, std::placeholders::_1,
         std::placeholders::_2, std::placeholders::_3));
+
     server.setThreadNum(4);
     server.start();
     _loop->loop();
 }
 
-void RpcProvider::OnConnection(TcpConnectionPtr const &conn) {
+void MprpcProvider::OnConnection(TcpConnectionPtr const &conn) {
     if (!conn->connected()) {
         conn->shutdown();
     }
@@ -67,7 +73,7 @@ void RpcProvider::OnConnection(TcpConnectionPtr const &conn) {
  * @param conn
  * @param buffer
  */
-void RpcProvider::OnMessage(
+void MprpcProvider::OnMessage(
     TcpConnectionPtr const &conn, Buffer *buffer, [[maybe_unused]] Timestamp) {
     std::string recv_buf = buffer->retrieveAllAsString();
     uint32_t header_size;
@@ -109,6 +115,9 @@ void RpcProvider::OnMessage(
     }
 
     ::google::protobuf::MethodDescriptor const *method_desc = mit->second;
+    if (!method_desc) {
+        log_error("bad method_desc");
+    }
 
     // 创建 request/response
     ::google::protobuf::Message *request = service->GetRequestPrototype(method_desc).New();
@@ -116,14 +125,16 @@ void RpcProvider::OnMessage(
 
     if (!request->ParseFromString(args_str)) {
         log_debug("Parse args from request failed:{}", args_str);
+        delete request;
+        delete response;
         return;
     }
 
     ctx *c = new ctx(request, response);
 
     ::google::protobuf::Closure *done
-        = ::google::protobuf::NewCallback<RpcProvider, TcpConnectionPtr const &, ctx *>(
-            this, &RpcProvider::SendRpcResponse, conn, c);
+        = ::google::protobuf::NewCallback<MprpcProvider, TcpConnectionPtr const &, ctx *>(
+            this, &MprpcProvider::SendRpcResponse, conn, c);
 
     /*
         最后一个参数 done 是一个 Closure 回调。如果传 nullptr，表示同步调用——CallMethod
@@ -136,10 +147,10 @@ void RpcProvider::OnMessage(
     service->CallMethod(method_desc, nullptr, request, response, done);
 }
 
-void RpcProvider::SendRpcResponse(TcpConnectionPtr const &conn, ctx *c) {
+void MprpcProvider::SendRpcResponse(TcpConnectionPtr const &conn, ctx *c) {
     std::string reponse_str;
     if (!c->response->SerializeToString(&reponse_str)) {
-        log_error("序列化失败"); 
+        log_error("序列化失败");
         return;
     }
 

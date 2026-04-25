@@ -5,6 +5,10 @@
  *
  */
 
+#include "MprpcApplication.h"
+#include "MprpcChannel.h"
+#include "MprpcController.h"
+#include "MprpcProvider.h"
 #include "muduo/noncopyable.h"
 
 class Config;
