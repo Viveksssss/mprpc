@@ -1,5 +1,6 @@
 #include "include/Loggers.h"
 #include <chrono>
+#include <csignal>
 #include <ctime>
 #include <filesystem>
 #include <fstream>
@@ -8,6 +9,8 @@
 #include <sstream>
 #include <string>
 #include <thread>
+
+static std::atomic<Loggers *> g_logger_instance{nullptr};
 
 namespace {
 
@@ -25,11 +28,40 @@ std::string getLogFilePath(std::string const &path) {
 
 Loggers &Loggers::GetInstance() {
     static Loggers instance;
+    g_logger_instance.store(&instance); // 保存指针供信号处理
     return instance;
 }
 
+void Loggers::signalHandler(int sig) {
+    if (sig == SIGINT || sig == SIGTERM) {
+        std::cout << "\nReceived signal " << sig << ", shutting down gracefully..." << std::endl;
+        if (auto *instance = g_logger_instance.load()) {
+            instance->shutdown(); // 请求关闭
+        }
+        // 设置一个短暂的超时等待日志写入
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        exit(sig); // 退出
+    }
+}
+
+void Loggers::shutdown() {
+    _shutdown_requested = true;
+    _running = false;
+    _queue.break_wait();
+
+    // 等待后台线程处理完所有消息（最多等待3秒）
+    if (_worker.joinable()) {
+        auto start = std::chrono::steady_clock::now();
+        while (
+            !_queue.empty() && std::chrono::steady_clock::now() - start < std::chrono::seconds(3)) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+        _worker.join();
+    }
+}
+
 /**
- * @brief 指定log目录
+ * @brief 指定log目录,默认在/tmp/mprpc下
  *
  * @param path
  */
@@ -46,12 +78,13 @@ void Loggers::SetLogLevel(LogLevel level) {
 }
 
 /* 将日志信息写入LogQueue */
-void Loggers::log(std::string msg) {
-    _queue.push(std::move(msg));
+void Loggers::log(LogLevel level, std::string msg) {
+    _queue.push({level, msg, std::chrono::system_clock::now()});
 }
 
-Loggers::Loggers() {
-    _path = ".";
+Loggers::Loggers() : _running(true), _path("/tmp/mprpc") {
+    std::signal(SIGINT, signalHandler);
+    std::signal(SIGTERM, signalHandler);
 
     _worker = std::thread([this]() {
         std::string current_file;
@@ -67,14 +100,16 @@ Loggers::Loggers() {
             oss << std::put_time(&tm, "%Y-%m-%d");
             std::string today = oss.str();
 
-            std::ostringstream ooss;
-            ooss << std::put_time(&tm, "%H:%M:%S");
-            std::string time = ooss.str();
-
             if (today != last_date) {
                 std::string new_file = getLogFilePath(_path);
 
-                std::filesystem::create_directories(std::filesystem::path(new_file).parent_path());
+                std::error_code ec;
+                std::filesystem::create_directories(
+                    std::filesystem::path(new_file).parent_path(), ec);
+                if (ec) {
+                    std::cerr << "Can't create directory: " << ec.message() << std::endl;
+                    continue;
+                }
 
                 if (ofs.is_open()) {
                     ofs.close();
@@ -89,9 +124,14 @@ Loggers::Loggers() {
                 last_date = today;
             }
 
-            std::string msg;
-            if (_queue.pop_with_timeout(msg, std::chrono::milliseconds(100))) {
-                std::string str = time + " [" + log_level_name(_log_level) + "] " + msg;
+            LogMessage logMsg;
+            if (_queue.pop_with_timeout(logMsg, std::chrono::milliseconds(100))) {
+                auto msg_time = std::chrono::system_clock::to_time_t(logMsg.timestamp);
+                std::tm msg_tm = *std::localtime(&msg_time);
+                std::ostringstream time_oss;
+                time_oss << std::put_time(&msg_tm, "%H:%M:%S");
+                std::string str
+                    = time_oss.str() + " [" + log_level_name(logMsg.level) + "] " + logMsg.msg;
                 if (ofs.is_open()) {
                     ofs << str << "\n";
                 } else {
@@ -100,20 +140,18 @@ Loggers::Loggers() {
             }
         }
 
-        std::string msg;
-        while (_queue.try_pop(msg)) {
+        LogMessage log_msg;
+        while (_queue.try_pop(log_msg)) {
             if (!ofs.is_open() && current_file.empty()) {
-                std::cerr << msg << std::endl;
+                std::cerr << log_msg.msg << std::endl;
             } else {
-                auto now = std::chrono::system_clock::now();
-                auto time_t_now = std::chrono::system_clock::to_time_t(now);
-                std::tm tm = *std::localtime(&time_t_now);
+                auto msg_time = std::chrono::system_clock::to_time_t(log_msg.timestamp);
+                std::tm msg_tm = *std::localtime(&msg_time);
+                std::ostringstream time_oss;
+                time_oss << std::put_time(&msg_tm, "%H:%M:%S");
+                std::string str
+                    = time_oss.str() + " [" + log_level_name(log_msg.level) + "] " + log_msg.msg;
 
-                std::ostringstream ooss;
-                ooss << std::put_time(&tm, "%H:%M:%S");
-                std::string time = ooss.str();
-
-                std::string str = time + " [" + log_level_name(_log_level) + "] " + msg;
                 ofs << str << "\n";
             }
         }
@@ -124,9 +162,5 @@ Loggers::Loggers() {
 }
 
 Loggers::~Loggers() {
-    _running = false;
-    _queue.break_wait();
-    if (_worker.joinable()) {
-        _worker.join();
-    }
+    shutdown();
 }

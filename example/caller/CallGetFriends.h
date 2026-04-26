@@ -1,6 +1,5 @@
 #pragma once
 
-#include "MprpcApplication.h"
 #include "MprpcController.h"
 #include "user.pb.h"
 #include <Logger.h>
@@ -16,7 +15,6 @@ inline void func_getfriends(fixbug::UserServiceRpc_Stub *stub, MprpcController *
         std::cout << controller->ErrorText() << std::endl;
         return;
     }
-    log_info("{}", response3.success());
     for (auto &p: response3.name()) {
         std::cout << p << std::endl;
     }

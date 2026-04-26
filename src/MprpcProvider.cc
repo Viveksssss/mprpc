@@ -1,6 +1,8 @@
 #include "include/MprpcProvider.h"
 #include "include/Config.h"
 #include "include/rpcheader.pb.h"
+#include "ZKClient.h"
+#include "zookeeper.h"
 #include <Callbacks.h>
 #include <EventLoop.h>
 #include <google/protobuf/descriptor.h>
@@ -13,6 +15,7 @@
 #include <InetAddress.h>
 #include <Logger.h>
 #include <muduo/TcpServer.h>
+#include <netinet/in.h>
 #include <string>
 
 #undef LOG_ENABLED
@@ -39,22 +42,38 @@ void MprpcProvider::NotifyService(::google::protobuf::Service *service) {
 }
 
 void MprpcProvider::Run() {
-    std::cout << ("===== to be Run =====\n");
     std::string serverip = Config::GetInstance().Get("rpcserverip");
     std::string serverport = Config::GetInstance().Get("rpcserverport");
     InetAddress addr(std::stoi(serverport), serverip);
     _loop = new EventLoop;
     TcpServer server(_loop, addr, "RpcServer");
 
-    // log_info("{}:{}", serverip, serverport);
-    std::cout << serverip << ":" << serverport << std::endl;
+    log_info("Started in {}:{}", serverip, serverport);
+    // std::cout << serverip << ":" << serverport << std::endl;
 
     server.setConnectionCallback(
         std::bind(&::MprpcProvider::OnConnection, this, std::placeholders::_1));
     server.setMessageCallback(std::bind(&::MprpcProvider::OnMessage, this, std::placeholders::_1,
         std::placeholders::_2, std::placeholders::_3));
-
     server.setThreadNum(4);
+
+    ZKClient zkCli;
+    zkCli.Start();
+
+    for (auto &p: _services) {
+        std::string service_path = "/" + p.first;
+        zkCli.Create(service_path.c_str(), nullptr, 0);
+        for (auto &mp: p.second._methods) {
+            std::string method_path = service_path + "/" + mp.first;
+            char method_path_data[128] = {0};
+            sprintf(method_path_data, "%s:%d", serverip.data(), std::stoi(serverport));
+            zkCli.Create(
+                method_path.c_str(), method_path_data, strlen(method_path_data), ZOO_EPHEMERAL);
+        }
+    }
+
+    log_info("RpcProvide Started");
+
     server.start();
     _loop->loop();
 }

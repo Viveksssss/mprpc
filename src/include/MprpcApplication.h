@@ -5,6 +5,7 @@
  *
  */
 
+#include "Config.h"
 #include "MprpcApplication.h"
 #include "MprpcChannel.h"
 #include "MprpcController.h"
@@ -17,6 +18,10 @@ class MprpcApplication : noncopyable {
 public:
     static void Init(int argc, char **argv);
     static MprpcApplication &GetInstance();
+
+    Config &GetConfig() {
+        return _config;
+    }
 
 private:
     MprpcApplication();

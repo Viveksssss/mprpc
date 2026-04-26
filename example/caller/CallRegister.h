@@ -1,6 +1,5 @@
 #pragma once
 
-#include "MprpcApplication.h"
 #include "MprpcController.h"
 #include "user.pb.h"
 #include <Logger.h>
@@ -17,5 +16,5 @@ inline void func_register(fixbug::UserServiceRpc_Stub *stub, MprpcController *co
         std::cout << controller->ErrorText() << std::endl;
         return;
     }
-    log_info("{}", response2.success());
+    // log_info("{}", response2.success());
 }

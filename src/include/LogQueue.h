@@ -28,6 +28,11 @@ public:
         return data;
     }
 
+    bool empty() {
+        std::lock_guard<std::mutex> lock(_mtx);
+        return _queue.empty();
+    }
+
     bool pop_with_timeout(T &value, std::chrono::milliseconds timeout) {
         std::unique_lock<std::mutex> lock(_mtx);
 

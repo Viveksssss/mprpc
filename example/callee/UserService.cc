@@ -1,4 +1,5 @@
 #include "../user.pb.h"
+#include "Loggers.h"
 #include "MprpcApplication.h"
 #include "MprpcProvider.h"
 #include <absl/base/call_once.h>
@@ -105,8 +106,11 @@ public:
 };
 
 auto main(int argc, char **argv) -> int {
+    // Loggers::GetInstance().set_path("/home/vivek/");
+    LOG_INFO("/home");
+
     log_start();
-    set_log_level(log_level::debug);
+    set_log_level(log_level::info);
     log_info("callee_start");
     MprpcApplication::Init(argc, argv);
     log_info("Init ok");

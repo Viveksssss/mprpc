@@ -8,8 +8,8 @@
 auto main(int argc, char **argv) -> int {
     std::cout << argv[0] << argv[1] << ":" << argv[2] << std::endl;
     log_start();
-    set_log_level(log_level::debug);
-    log_info("caller_start");
+    set_log_level(log_level::info);
+    log_info("MprpcClient Started");
     MprpcApplication::Init(argc, argv);
     fixbug::UserServiceRpc_Stub stub(new MprpcChannel{});
     MprpcController controller;

@@ -1,11 +1,13 @@
 #include "include/MprpcChannel.h"
 #include "Defer.h"
 #include "rpcheader.pb.h"
+#include "ZKClient.h"
 #include <arpa/inet.h>
 #include <Buffer.h>
 #include <google/protobuf/descriptor.h>
 #include <google/protobuf/message.h>
 #include <google/protobuf/service.h>
+#include <google/protobuf/stubs/port.h>
 #include <Logger.h>
 #include <netinet/in.h>
 #include <string>
@@ -25,7 +27,6 @@
  */
 void MprpcChannel::CallMethod(MethodDescriptor const *method, RpcController *controller,
     Message const *request, Message *response, Closure *done) {
-    log_info("CallMethod");
     ::google::protobuf::ServiceDescriptor const *descriptor = method->service();
     std::string service_name = descriptor->name().data();
     std::string method_name = method->name().data();
@@ -65,14 +66,32 @@ void MprpcChannel::CallMethod(MethodDescriptor const *method, RpcController *con
     /* 清理 */
     Defer defer([clientfd]() { close(clientfd); });
 
+    ZKClient zkCli;
+    zkCli.Start();
+    std::string method_path = "/" + service_name + "/" + method_name;
+    std::string host_data = zkCli.GetData(method_path.c_str());
+    if (host_data == "") {
+        controller->SetFailed(method_path + " is not exist");
+        return;
+    }
+
+    int idx = host_data.find(":");
+    if (idx == std::string::npos) {
+        controller->SetFailed(method_path + " address is invalid");
+        return;
+    }
+
+    std::string ip = host_data.substr(0, idx);
+    uint16_t port = std::stoi(host_data.substr(idx + 1));
+
     /* 绑定地址 */
     sockaddr_in addr;
-    addr.sin_port = htons(8888);
+    addr.sin_port = htons(port);
     addr.sin_family = AF_INET;
-    inet_pton(AF_INET, "127.0.0.1", &addr.sin_addr);
+    inet_pton(AF_INET, ip.c_str(), &addr.sin_addr);
     socklen_t sock_len = sizeof addr;
     if (connect(clientfd, (sockaddr *)&addr, sock_len) == -1) {
-        std::cout << "error connect" << std::endl;
+        log_error("Error connect");
         controller->SetFailed("Error connect");
         return;
     }

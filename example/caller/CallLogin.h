@@ -1,6 +1,5 @@
 #pragma once
 
-#include "MprpcApplication.h"
 #include "MprpcController.h"
 #include "user.pb.h"
 #include <Logger.h>
@@ -21,6 +20,6 @@ inline void func_login(fixbug::UserServiceRpc_Stub *stub, MprpcController *contr
     if (!response.success()) {
         log_info("{}:{}", response.result().errmsg(), response.result().errcode());
     } else {
-        log_info("rpc调用成功!");
+        log_debug("rpc调用成功!");
     }
 }

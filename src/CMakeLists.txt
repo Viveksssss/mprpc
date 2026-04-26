@@ -1,6 +1,17 @@
 # 动态库
 file(GLOB_RECURSE SRC_LIST "*.cpp" "*.cc")
-add_library(mprpc SHARED ${SRC_LIST})
+add_definitions(-DTHREADED)
+add_library(mprpc SHARED ${SRC_LIST} )
+target_include_directories(mprpc PRIVATE /usr/local/include/zookeeper)
+
+target_link_libraries(
+    mprpc PRIVATE
+    -Wl,--whole-archive
+    /usr/local/lib/libzookeeper_mt.a
+    -Wl,--no-whole-archive
+    sasl2
+)
+
 target_link_libraries(mprpc PUBLIC 
     pthread 
     PkgConfig::PROTOBUF
